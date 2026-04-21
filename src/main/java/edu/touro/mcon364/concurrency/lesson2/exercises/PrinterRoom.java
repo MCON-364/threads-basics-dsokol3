@@ -5,22 +5,22 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Exercise 3 — Limiting concurrent access with {@link Semaphore}.
- *
+ * <p>
  * Scenario: a shared printer room has exactly {@code printerCount} printers.
  * Many threads (people) want to print, but only {@code printerCount} may print
  * at the same time.  All others must wait.
- *
+ * <p>
  * Your tasks:
- *
+ * <p>
  * (A) Implement {@link #print(String)}.
- *     - Acquire one permit from the semaphore before printing.
- *     - Increment {@code activeCount} while printing (to let tests observe
- *       concurrent usage).
- *     - Release the permit in a {@code finally} block.
- *     - Decrement {@code activeCount} after releasing.
- *
+ * - Acquire one permit from the semaphore before printing.
+ * - Increment {@code activeCount} while printing (to let tests observe
+ * concurrent usage).
+ * - Release the permit in a {@code finally} block.
+ * - Decrement {@code activeCount} after releasing.
+ * <p>
  * (B) Observe via tests that {@code maxObservedConcurrency} never exceeds
- *     the number of available printers.
+ * the number of available printers.
  */
 public class PrinterRoom {
 
@@ -37,7 +37,7 @@ public class PrinterRoom {
         this.printerCount = printerCount;
         // TODO: initialise the semaphore so that exactly printerCount threads
         //       may be inside print() at the same time
-        this.semaphore = null;
+        this.semaphore = new Semaphore(printerCount);
     }
 
     /**
@@ -48,29 +48,49 @@ public class PrinterRoom {
      */
     public void print(String document) throws InterruptedException {
         // TODO: block here until a printer permit is available
+        semaphore.acquire();
 
         try {
             // TODO: record that one more job is now active, then update the
             //       high-water mark if the new active count is a new maximum
+            int current = activeCount.incrementAndGet();
+            maxObserved.updateAndGet(max -> Math.max(max, current));
 
             // Simulate printing time
             Thread.sleep(50);
+            completedJobs.incrementAndGet();
 
             // TODO: record that this job has finished
         } finally {
             // TODO: signal that one more printer is free again — do this even
             //       if an exception was thrown, and update the active count
+            activeCount.decrementAndGet();
+            semaphore.release();
         }
     }
 
-    /** Returns the number of currently active print jobs. */
-    public int getActiveCount() { return activeCount.get(); }
+    /**
+     * Returns the number of currently active print jobs.
+     */
+    public int getActiveCount() {
+        return activeCount.get();
+    }
 
-    /** Returns the peak number of simultaneous print jobs observed. */
-    public int getMaxObservedConcurrency() { return maxObserved.get(); }
+    /**
+     * Returns the peak number of simultaneous print jobs observed.
+     */
+    public int getMaxObservedConcurrency() {
+        return maxObserved.get();
+    }
 
-    /** Returns the total number of jobs that have completed. */
-    public int getCompletedJobs() { return completedJobs.get(); }
+    /**
+     * Returns the total number of jobs that have completed.
+     */
+    public int getCompletedJobs() {
+        return completedJobs.get();
+    }
 
-    public int getPrinterCount() { return printerCount; }
+    public int getPrinterCount() {
+        return printerCount;
+    }
 }
