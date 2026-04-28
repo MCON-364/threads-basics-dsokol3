@@ -8,31 +8,31 @@ import java.util.List;
 
 /**
  * Exercise 5: Creating threads with a Runnable passed as a lambda
- *
+ * <p>
  * The lesson showed four equivalent ways to write a Runnable.
  * This exercise practises the lambda style — the most common modern form:
- *
- *   Runnable r = () -> { ... };
- *   Thread t = new Thread(r, "thread-name");
- *   t.start();
- *
+ * <p>
+ * Runnable r = () -> { ... };
+ * Thread t = new Thread(r, "thread-name");
+ * t.start();
+ * <p>
  * Or inline:
- *   Thread t = new Thread(() -> { ... }, "thread-name");
- *
+ * Thread t = new Thread(() -> { ... }, "thread-name");
+ * <p>
  * Your tasks:
- *
+ * <p>
  * (A) launchLoggerThread(List<String> log, String message)
- *     Create a Runnable AS A LAMBDA that appends {@code message} to {@code log},
- *     wrap it in a Thread named "logger", start it, and join it before returning.
- *
+ * Create a Runnable AS A LAMBDA that appends {@code message} to {@code log},
+ * wrap it in a Thread named "logger", start it, and join it before returning.
+ * <p>
  * (B) launchTwoCounterThreads(List<Task> tasks, List<String> threadNames)
- *     Launch exactly two threads using INLINE lambda syntax:
- *       - "counter-a" iterates through tasks and counts those with Priority.HIGH,
- *         storing the result in highCount.
- *       - "counter-b" iterates through tasks and counts those with Priority.LOW,
- *         storing the result in lowCount.
- *     Start both threads, then join both before returning.
- *
+ * Launch exactly two threads using INLINE lambda syntax:
+ * - "counter-a" iterates through tasks and counts those with Priority.HIGH,
+ * storing the result in highCount.
+ * - "counter-b" iterates through tasks and counts those with Priority.LOW,
+ * storing the result in lowCount.
+ * Start both threads, then join both before returning.
+ * <p>
  * Do NOT use an anonymous class or a named class — lambdas only.
  */
 public class LambdaRunnableExercise {
@@ -51,6 +51,14 @@ public class LambdaRunnableExercise {
     public void launchLoggerThread(List<String> log, String message) throws InterruptedException {
         // TODO: create a Runnable lambda, pass it to new Thread(..., "logger"),
         //       start the thread, join it, and store the message in loggedMessage.
+        Runnable r = () -> {
+            log.add(message);
+            loggedMessage = message;
+        };
+
+        Thread t = new Thread(r, "logger");
+        t.start();
+        t.join();
     }
 
     /**
@@ -62,10 +70,43 @@ public class LambdaRunnableExercise {
     public void launchTwoCounterThreads(List<Task> tasks) throws InterruptedException {
         // TODO: create two threads using inline lambda syntax, start both,
         //       join both, and store results in highCount and lowCount.
+        Thread t = new Thread(() -> {
+            int count = 0;
+            for (Task task : tasks) {
+                if (task.priority() == Priority.HIGH) {
+                    count++;
+                }
+            }
+            highCount = count;
+        }, "counter-a");
+
+        Thread t2 = new Thread(() -> {
+            int count = 0;
+            for (Task task : tasks) {
+                if (task.priority() == Priority.LOW) {
+                    count++;
+                }
+            }
+            lowCount = count;
+        }, "counter-b");
+
+        t.start();
+        t2.start();
+
+        t.join();
+        t2.join();
     }
 
-    public String getLoggedMessage() { return loggedMessage; }
-    public int getHighCount()        { return highCount; }
-    public int getLowCount()         { return lowCount; }
+    public String getLoggedMessage() {
+        return loggedMessage;
+    }
+
+    public int getHighCount() {
+        return highCount;
+    }
+
+    public int getLowCount() {
+        return lowCount;
+    }
 }
 

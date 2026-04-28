@@ -4,25 +4,25 @@ import java.util.concurrent.CountDownLatch;
 
 /**
  * Exercise 2 — Startup coordination with {@link CountDownLatch}.
- *
+ * <p>
  * Scenario: a coordinator thread must wait until a fixed number of worker
  * threads have finished their startup phase before allowing work to begin.
- *
+ * <p>
  * Your tasks:
- *
+ * <p>
  * (A) Implement {@link #launchAndWait(int)}.
- *     - Create a {@code CountDownLatch} with the given {@code workerCount}.
- *     - Start {@code workerCount} threads.  Each thread must:
- *         1. Record its name in the {@code startedNames} list (use a
- *            {@code synchronized} block on the list).
- *         2. Call {@code countDown()} on the latch.
- *     - After starting all threads, call {@code latch.await()} on the main
- *       calling thread so it blocks until all workers have checked in.
- *     - After {@code await()} returns, set {@code allStarted = true}.
- *
+ * - Create a {@code CountDownLatch} with the given {@code workerCount}.
+ * - Start {@code workerCount} threads.  Each thread must:
+ * 1. Record its name in the {@code startedNames} list (use a
+ * {@code synchronized} block on the list).
+ * 2. Call {@code countDown()} on the latch.
+ * - After starting all threads, call {@code latch.await()} on the main
+ * calling thread so it blocks until all workers have checked in.
+ * - After {@code await()} returns, set {@code allStarted = true}.
+ * <p>
  * (B) Understand the difference from a plain {@code join()} loop:
- *     A {@code CountDownLatch} lets the workers keep running after they
- *     signal; {@code join()} would wait for the thread to fully terminate.
+ * A {@code CountDownLatch} lets the workers keep running after they
+ * signal; {@code join()} would wait for the thread to fully terminate.
  */
 public class WorkerStartupLatch {
 
@@ -39,25 +39,44 @@ public class WorkerStartupLatch {
      */
     public void launchAndWait(int workerCount) throws InterruptedException {
         // TODO: create a latch that will count down once per worker
+        CountDownLatch ready = new CountDownLatch(workerCount);
 
         for (int i = 1; i <= workerCount; i++) {
             int id = i;
             // TODO: create and start a thread named "worker-" + id that:
             //       (1) records its own name in startedNames (think about thread safety here)
             //       (2) signals the latch that it is ready
+            new Thread(() -> {
+                try {
+                    Thread.sleep(id * 200L);
+                    synchronized (startedNames) {
+                        startedNames.add(Thread.currentThread().getName());
+                    }
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+                ready.countDown();
+            }, "worker-" + i).start();
+
         }
 
         // TODO: make the calling thread wait here until every worker has signalled
+        ready.await();
 
         // TODO: mark the startup phase as complete
+        allStarted = true;
     }
 
-    /** Returns {@code true} once all workers have called {@code countDown()}. */
+    /**
+     * Returns {@code true} once all workers have called {@code countDown()}.
+     */
     public boolean isAllStarted() {
         return allStarted;
     }
 
-    /** Returns the names of threads that checked in (order may vary). */
+    /**
+     * Returns the names of threads that checked in (order may vary).
+     */
     public java.util.List<String> getStartedNames() {
         return java.util.List.copyOf(startedNames);
     }

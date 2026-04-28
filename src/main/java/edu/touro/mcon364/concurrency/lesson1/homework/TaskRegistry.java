@@ -9,7 +9,7 @@ import java.util.Optional;
 /**
  * Homework:
  * Implement a thread-safe registry of tasks keyed by id.
- *
+ * <p>
  * Requirements:
  * - add(task): store or replace a task by id
  * - findById(id): return Optional
@@ -23,26 +23,36 @@ public class TaskRegistry {
 
     public void add(Task task) {
         // TODO: make thread-safe
-        tasks.put(task.id(), task);
+        synchronized (tasks) {
+            tasks.put(task.id(), task);
+        }
     }
 
     public Optional<Task> findById(int id) {
         // TODO: make thread-safe
-        return Optional.ofNullable(tasks.get(id));
+        synchronized (tasks) {
+            return Optional.ofNullable(tasks.get(id));
+        }
     }
 
     public Optional<Task> remove(int id) {
         // TODO: make thread-safe
-        return Optional.ofNullable(tasks.remove(id));
+        synchronized (tasks) {
+            return Optional.ofNullable(tasks.remove(id));
+        }
     }
 
     public int size() {
         // TODO: make thread-safe
-        return tasks.size();
+        synchronized (tasks) {
+            return tasks.size();
+        }
     }
 
     public Map<Integer, Task> snapshot() {
         // TODO: return a defensive copy safely
-        return Map.copyOf(tasks);
+        synchronized (tasks) {
+            return Map.copyOf(tasks);
+        }
     }
 }
