@@ -49,7 +49,9 @@ public class WorkerStartupLatch {
             new Thread(() -> {
                 try {
                     Thread.sleep(id * 200L);
-                    startedNames.add(Thread.currentThread().getName());
+                    synchronized (startedNames) {
+                        startedNames.add(Thread.currentThread().getName());
+                    }
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                 }
